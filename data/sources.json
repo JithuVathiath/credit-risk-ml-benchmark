@@ -1,0 +1,48 @@
+{
+  "dataset": "SBA 7(a) & 504 FOIA",
+  "publisher": "U.S. Small Business Administration, Office of Capital Access",
+  "landing_page": "https://data.sba.gov/dataset/7a-504-foia",
+  "snapshot_date": "2026-06-30",
+  "licence": "U.S. Government Works / Public Domain",
+  "resources": [
+    {
+      "name": "sba_7a_504_data_dictionary.xlsx",
+      "destination": "data/metadata/sba_7a_504_data_dictionary.xlsx",
+      "url": "https://data.sba.gov/sites/default/files/uploaded_resources/7a_504_foia_data_dictionary.xlsx",
+      "bytes": 24529,
+      "sha256": "777ba97a6f92e325f79905610816cb59d41f1971cd964c54dc30ef02730a3941"
+    },
+    {
+      "name": "7(a) FY1991-FY1999",
+      "destination": "data/raw/sba_7a_fy1991_fy1999_2026-06-30.csv",
+      "url": "https://data.sba.gov/sites/default/files/uploaded_resources/FOIA_7a_FY1991_FY1999_asof_260630.csv",
+      "bytes": 146416885,
+      "records": 337033,
+      "sha256": "05040efc4a43224a02460d606ea744579a54b650bdb99663a833ed0b31936213"
+    },
+    {
+      "name": "7(a) FY2000-FY2009",
+      "destination": "data/raw/sba_7a_fy2000_fy2009_2026-06-30.csv",
+      "url": "https://data.sba.gov/sites/default/files/uploaded_resources/FOIA_7a_FY2000_FY2009_asof_260630.csv",
+      "bytes": 318425094,
+      "records": 690333,
+      "sha256": "66674e18a700fbba0378c25118c291ac2759784a550c643cab5747eced763d6a"
+    },
+    {
+      "name": "7(a) FY2010-FY2019",
+      "destination": "data/raw/sba_7a_fy2010_fy2019_2026-06-30.csv",
+      "url": "https://data.sba.gov/sites/default/files/uploaded_resources/FOIA_7a_FY2010_FY2019_asof_260630.csv",
+      "bytes": 255101999,
+      "records": 545751,
+      "sha256": "01a3e2c7988a6f4052e53f218a309feb2ec2fe42887bebdc0fa94ac8b1024ade"
+    },
+    {
+      "name": "7(a) FY2020-present",
+      "destination": "data/raw/sba_7a_fy2020_present_2026-06-30.csv",
+      "url": "https://data.sba.gov/sites/default/files/uploaded_resources/FOIA_7a_FY2020_Present_asof_260630.csv",
+      "bytes": 181130871,
+      "records": 388338,
+      "sha256": "6c1e9132b5141a19f82bdc8ccafb86c9a01662461cad41ddb36a3cf409d8a4fe"
+    }
+  ]
+}

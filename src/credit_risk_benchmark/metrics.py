@@ -13,9 +13,11 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     average_precision_score,
+    balanced_accuracy_score,
     brier_score_loss,
     confusion_matrix,
     f1_score,
+    log_loss,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -98,17 +100,117 @@ def binary_classification_metrics(
             float(average_precision_score(labels, probabilities)) if has_both_classes else np.nan
         ),
         "brier_score": float(brier_score_loss(labels, probabilities)),
+        "log_loss": float(log_loss(labels, probabilities, labels=[0, 1])),
         "expected_calibration_error": expected_calibration_error(
             labels, probabilities, n_bins=n_calibration_bins
         ),
         "precision": float(precision_score(labels, predictions, zero_division=0)),
         "recall": float(recall_score(labels, predictions, zero_division=0)),
         "f1": float(f1_score(labels, predictions, zero_division=0)),
+        "balanced_accuracy": (
+            float(balanced_accuracy_score(labels, predictions)) if has_both_classes else np.nan
+        ),
         "true_negative": int(tn),
         "false_positive": int(fp),
         "false_negative": int(fn),
         "true_positive": int(tp),
     }
+
+
+def select_cost_threshold(
+    y_true: Iterable[int],
+    y_probability: Iterable[float],
+    *,
+    false_positive_cost: float = 1.0,
+    false_negative_cost: float = 5.0,
+    thresholds: Iterable[float] | None = None,
+) -> tuple[float, pd.DataFrame]:
+    """Select the validation threshold that minimises documented relative cost."""
+    labels, probabilities = _validated_binary_inputs(y_true, y_probability)
+    if false_positive_cost < 0 or false_negative_cost < 0:
+        raise ValueError("misclassification costs must be non-negative")
+    candidates = (
+        np.linspace(0.005, 0.5, 200) if thresholds is None else np.asarray(list(thresholds))
+    )
+    report = threshold_report(labels, probabilities, thresholds=candidates)
+    report["relative_cost"] = (
+        false_positive_cost * report["false_positive"]
+        + false_negative_cost * report["false_negative"]
+    )
+    report["cost_per_100_loans"] = 100.0 * report["relative_cost"] / report["n"]
+    best_row = report.sort_values(
+        ["relative_cost", "threshold"], ascending=[True, False]
+    ).iloc[0]
+    return float(best_row["threshold"]), report
+
+
+def bootstrap_metric_interval(
+    y_true: Iterable[int],
+    y_probability: Iterable[float],
+    *,
+    metric: str = "roc_auc",
+    n_resamples: int = 200,
+    confidence_level: float = 0.95,
+    random_state: int = 42,
+) -> tuple[float, float]:
+    """Return a deterministic stratified bootstrap confidence interval."""
+    labels, probabilities = _validated_binary_inputs(y_true, y_probability)
+    if metric not in {"roc_auc", "pr_auc", "brier_score"}:
+        raise ValueError("unsupported bootstrap metric")
+    if n_resamples < 2:
+        raise ValueError("n_resamples must be at least 2")
+    if not 0 < confidence_level < 1:
+        raise ValueError("confidence_level must lie strictly between 0 and 1")
+
+    positive_indices = np.flatnonzero(labels == 1)
+    negative_indices = np.flatnonzero(labels == 0)
+    if not len(positive_indices) or not len(negative_indices):
+        return np.nan, np.nan
+
+    rng = np.random.default_rng(random_state)
+    values = np.empty(n_resamples, dtype=float)
+    for position in range(n_resamples):
+        sample_indices = np.concatenate(
+            [
+                rng.choice(negative_indices, size=len(negative_indices), replace=True),
+                rng.choice(positive_indices, size=len(positive_indices), replace=True),
+            ]
+        )
+        sample_labels = labels[sample_indices]
+        sample_probabilities = probabilities[sample_indices]
+        if metric == "roc_auc":
+            values[position] = roc_auc_score(sample_labels, sample_probabilities)
+        elif metric == "pr_auc":
+            values[position] = average_precision_score(sample_labels, sample_probabilities)
+        else:
+            values[position] = brier_score_loss(sample_labels, sample_probabilities)
+
+    alpha = (1.0 - confidence_level) / 2.0
+    lower, upper = np.quantile(values, [alpha, 1.0 - alpha])
+    return float(lower), float(upper)
+
+
+def calibration_table(
+    y_true: Iterable[int], y_probability: Iterable[float], *, n_bins: int = 10
+) -> pd.DataFrame:
+    """Return quantile-binned reliability data suitable for plotting."""
+    labels, probabilities = _validated_binary_inputs(y_true, y_probability)
+    if n_bins < 2:
+        raise ValueError("n_bins must be at least 2")
+    try:
+        bins = pd.qcut(probabilities, q=n_bins, duplicates="drop")
+    except ValueError:
+        bins = pd.cut(probabilities, bins=n_bins, include_lowest=True)
+    frame = pd.DataFrame({"target": labels, "probability": probabilities, "bin": bins})
+    return (
+        frame.groupby("bin", observed=True)
+        .agg(
+            loans=("target", "size"),
+            mean_predicted_probability=("probability", "mean"),
+            observed_charge_off_rate=("target", "mean"),
+        )
+        .reset_index(drop=True)
+    )
 
 
 def threshold_report(
@@ -168,4 +270,3 @@ def subgroup_report(
     return pd.DataFrame(rows).sort_values("group", key=lambda s: s.astype(str)).reset_index(
         drop=True
     )
-

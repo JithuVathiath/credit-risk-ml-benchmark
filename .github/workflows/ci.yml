@@ -9,14 +9,21 @@ permissions:
 
 jobs:
   test:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest --cov=credit_risk_benchmark --cov-report=term-missing
+      - run: python -m compileall -q src scripts tests
+      - run: python examples/synthetic_demo.py
