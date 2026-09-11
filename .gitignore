@@ -11,6 +11,6 @@ build/
 *.egg-info/
 .env
 data/raw/
+data/metadata/
 data/private/
 artifacts/
-

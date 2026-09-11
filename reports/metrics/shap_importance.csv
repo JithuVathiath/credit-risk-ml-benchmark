@@ -1,0 +1,16 @@
+feature,mean_absolute_shap
+term_months,1.6745398994499705
+revolver_indicator,0.4493590055660368
+initial_interest_rate,0.25055437927138585
+guarantee_percentage,0.21967961006290382
+fixed_or_variable,0.20138160553793144
+business_age_band,0.16521726805300635
+lender_id,0.139509978803181
+processing_method,0.11082647933593565
+log_gross_approval,0.10299492952012958
+bank_state,0.09953200502502622
+log_jobs_supported,0.0757139930266339
+naics_sector,0.07278810505581886
+collateral_indicator,0.06471136245779645
+project_state,0.054387591468928964
+business_type,0.012235257893321867
