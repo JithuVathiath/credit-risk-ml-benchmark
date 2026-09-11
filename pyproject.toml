@@ -22,7 +22,7 @@ credit-risk-benchmark = "credit_risk_benchmark.cli:main"
 [project.optional-dependencies]
 dev = [
   "pytest>=8,<10",
-  "pytest-cov>=5,<7",
+  "pytest-cov>=5,<8",
   "ruff>=0.6,<1",
 ]
 benchmark = [
